@@ -4,3 +4,9 @@ streamlit
 requests
 pymongo
 python-dotenv
+PyMuPDF==1.26.6
+Pillow
+chromadb
+langchain-huggingface
+sentence-transformers
+langchain-groq
