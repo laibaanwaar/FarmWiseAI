@@ -26,17 +26,28 @@ def retrieve_chunks(question: str, crop: str, top_k: int = 3) -> list[dict]:
         query_embeddings=[query_vector],
         where={"crop": crop},
         n_results=min(top_k, total_records),
-        include=["documents", "metadatas"],
+        include=["documents", "metadatas", "distances"],
     )
 
     documents = results["documents"] or [[]]
     metadatas = results["metadatas"] or [[]]
+    distances = results["distances"] or [[]]
+
+    MAX_DISTANCE = 0.90
 
     return [
-        {"text": text, "metadata": metadata}
-        for text, metadata in zip(documents[0], metadatas[0])
+        {
+            "text": text,
+            "metadata": metadata,
+            "distance": distance
+        }
+        for text, metadata, distance in zip(
+            documents[0], metadatas[0], distances[0]
+        )
+        if distance <= MAX_DISTANCE
     ]
 
+  
 
 if __name__ == "__main__":
     matches = retrieve_chunks(

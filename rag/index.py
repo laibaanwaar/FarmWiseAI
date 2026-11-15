@@ -7,7 +7,7 @@ from rag.embeddings import get_embedding_model
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-CHUNKS_FILE = PROJECT_ROOT / "data" / "processed" / "handbook" / "chunks.jsonl"
+CHUNKS_FILE = PROJECT_ROOT / "data" / "processed" / "handbook_final" / "chunks.jsonl"
 CHROMA_DIR = PROJECT_ROOT / "data" / "chroma"
 COLLECTION_NAME = "farmwise_cotton_symptoms"
 
