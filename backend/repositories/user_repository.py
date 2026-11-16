@@ -26,3 +26,17 @@ class UserRepository:
     def find_pending_by_email(self, email):
         self._ensure_index()
         return self.collection.find_one({"email": email, "email_verified": False})
+
+    def find_by_email(self, email):
+        self._ensure_index()
+        return self.collection.find_one({"email": email})
+
+    def find_by_id(self, user_id):
+        return self.collection.find_one({"_id": user_id})
+
+    def mark_email_verified(self, user_id):
+        result = self.collection.update_one(
+            {"_id": user_id, "email_verified": False},
+            {"$set": {"email_verified": True}},
+        )
+        return result.modified_count == 1
