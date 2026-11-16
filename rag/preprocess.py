@@ -64,36 +64,88 @@ def extract_tables(page):
         }
 
 
+
 def disease_records(table, metadata):
     rows = table["rows"]
-    if not rows or tuple(clean_text(cell or "") for cell in rows[0]) != DISEASE_HEADERS:
+    if not rows:
         return []
+
+    actual_headers = tuple(
+        "".join(clean_text(cell or "").lower().split())
+        for cell in rows[0]
+    )
+
+    expected_headers = tuple(
+        "".join(clean_text(header).lower().split())
+        for header in DISEASE_HEADERS
+    )
+
+    if actual_headers != expected_headers:
+        return []
+
     records = []
     crop = None
+
     for row_index, row in enumerate(rows[1:], 1):
         if len(row) != 4:
             continue
+
         crop_cell, disease, symptoms, controls = row
+
         if crop_cell and clean_text(crop_cell):
-            crop = re.sub(r"\s+cont\.*$", "", clean_text(crop_cell), flags=re.I)
+            crop = re.sub(
+                r"\s+cont\s*\.{0,3}$",
+                "",
+                clean_text(crop_cell),
+                flags=re.I,
+            )
+
         if not (crop and disease and symptoms):
             continue
-        # These labels contain known line-break splits in this handbook.
-        disease = clean_text(re.sub(r"(?<=\w)-\s*\n\s*(?=\w)", "", disease))
-        disease = re.sub(r"^\d+\.\s*", "", disease)
+
+        
+        disease = clean_text(
+            re.sub(r"(?<=\w)-\s*\n\s*(?=\w)", "", disease)
+        )
+
+        disease_key = re.sub(r"[^a-z]", "", disease.lower())
+
+        if crop.lower() == "cotton":
+            if "seed" in disease_key:
+                disease = "Seedling diseases"
+            elif "fusari" in disease_key:
+                disease = "Fusarium wilt"
+            elif "bollrot" in disease_key:
+                disease = "Boll rot"
+            elif "leafspot" in disease_key:
+                disease = "Leaf spot"
+            elif "verticillium" in disease_key:
+                disease = "Verticillium wilt"
+        else:
+            disease = re.sub(r"^\s*\d+\s*\.?\s*", "", disease)
+
         fields = {
             "crop": crop.lower(),
             "disease": disease,
             "symptoms": clean_text(symptoms),
             "control_measures_source": clean_text(controls or ""),
         }
+
+
         records.append({
-            **metadata, **fields, "content_type": "table_row",
+            **metadata,
+            **fields,
+            "content_type": "table_row",
             "bbox": table["row_bboxes"][row_index],
-            "text": f"Crop: {crop}. Disease: {disease}. Symptoms: {fields['symptoms']}",
+            "text": (
+                f"Crop: {crop}. Disease: {disease}. "
+                f"Symptoms: {fields['symptoms']}"
+            ),
             "control_measures_review_required": bool(controls),
         })
+
     return records
+
 
 
 def read_image_text(image_path, tesseract, rotate):
