@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import pathlib
 import textwrap
+import re
 
 import streamlit as st
 
@@ -116,13 +117,29 @@ def load_css() -> str:
 def inject() -> None:
     st.markdown(f"<style>{load_css()}</style>", unsafe_allow_html=True)
 
-def show(markup: str, *args, **kwargs) -> None:
-    """Render an HTML fragment.
 
-    Markdown treats indented lines as code blocks, so the fragment is dedented
-    and every line is flattened before it reaches the renderer.
-    """
-    flat = "\n".join(line.lstrip() for line in textwrap.dedent(markup or "").splitlines()).strip()
+def show(markup: str, *args, **kwargs) -> None:
+    """Render an HTML fragment with same-tab internal navigation."""
+    flat = "\n".join(
+        line.lstrip()
+        for line in textwrap.dedent(markup or "").splitlines()
+    ).strip()
+
+    # Make all HTML links open in the current tab.
+    flat = re.sub(
+        r'(<a\b[^>]*?)\s+target=(["\']).*?\2',
+        r'\1 target="_self"',
+        flat,
+        flags=re.IGNORECASE,
+    )
+
+    flat = re.sub(
+        r'<a\b(?![^>]*\btarget\s*=)',
+        '<a target="_self"',
+        flat,
+        flags=re.IGNORECASE,
+    )
+
     st.markdown(flat, unsafe_allow_html=True)
 
 
