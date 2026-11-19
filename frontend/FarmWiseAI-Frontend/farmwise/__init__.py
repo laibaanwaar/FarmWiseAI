@@ -1,0 +1,1 @@
+"""FarmWiseAI frontend package."""
