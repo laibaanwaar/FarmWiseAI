@@ -12,3 +12,4 @@ __pycache__/
 
 # Local PDFs and datasets
 data/
+.vscode/
