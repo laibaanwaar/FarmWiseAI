@@ -6,6 +6,9 @@ from datetime import datetime
 
 import streamlit as st
 
+from html import escape
+
+from farmwise import ai_fallback
 from farmwise import components as ui
 from farmwise import rag
 from farmwise import theme as T
@@ -32,21 +35,42 @@ def _answer_into(question: str, crop: str) -> None:
     ss = st.session_state
     stamp = _now()
     ss.chat_messages.append({"role": "user", "text": question, "time": stamp})
+
     result = rag.answer(question, crop)
+
     if result["ok"]:
         entry = result["entry"]
-        ss.chat_messages.append({"role": "assistant", "entry_id": entry["id"], "time": stamp})
+        ss.chat_messages.append({
+            "role": "assistant",
+            "entry_id": entry["id"],
+            "time": stamp,
+        })
         ss.last_answer = entry["id"]
-    else:
-        ss.chat_messages.append(
-            {
-                "role": "assistant",
-                "entry_id": None,
-                "fallback": {"en": result["text_en"], "ur": result["text_ur"]},
-                "time": stamp,
-            }
-        )
-        ss.last_answer = None
+        return
+
+    try:
+        answers = ai_fallback.generate_bilingual_answers(question, crop)
+        if not answers.get("en") or not answers.get("ur"):
+            raise ValueError("Groq returned an empty answer.")
+
+        ss.chat_messages.append({
+            "role": "assistant",
+            "entry_id": None,
+            "ai_answer": answers,
+            "time": stamp,
+        })
+    except Exception:
+        ss.chat_messages.append({
+            "role": "assistant",
+            "entry_id": None,
+            "fallback": {
+                "en": result["text_en"],
+                "ur": result["text_ur"],
+            },
+            "time": stamp,
+        })
+
+    ss.last_answer = None
 
 
 def seed(question: str, crop: str = "cotton", title: str | None = None) -> None:
@@ -107,25 +131,44 @@ def _ensure_conversation() -> None:
 def _transcript(lang: str) -> str:
     blocks: list[str] = []
     for msg in st.session_state.chat_messages:
-        stamp = f'<div class="fw-answer-note" style="margin-top:6px">{msg.get("time", "")}</div>'
+        stamp = f'<div class="fw-answer-note" style="margin-top:6px">{escape(msg.get("time", ""))}</div>'
+
         if msg["role"] == "user":
+            question = escape(msg["text"])
             blocks.append(
                 f'<div class="fw-msg user"><span class="fw-msg-av">You</span>'
-                f'<div><div class="fw-bubble">{msg["text"]}</div>{stamp}</div></div>'
+                f'<div><div class="fw-bubble">{question}</div>{stamp}</div></div>'
             )
             continue
 
         entry = rag.entry_by_id(msg["entry_id"]) if msg.get("entry_id") else None
+
         if entry:
             body = ui.answer_html(entry, lang)
             if lang == "ur":
                 body = f'<div class="fw-ur" style="margin-top:0;font-size:13px">{body}</div>'
+        elif msg.get("ai_answer"):
+            answer = escape(msg["ai_answer"][lang])
+            label = (
+                "AI ?? ???? ???? ????? ???????"
+                if lang == "ur"
+                else "AI-generated general guidance"
+            )
+            direction = ' dir="rtl"' if lang == "ur" else ""
+            body = (
+                f'<div class="fw-ai-label">{label}</div>'
+                f'<div{direction} style="white-space:pre-wrap">{answer}</div>'
+            )
+            if lang == "ur":
+                body = f'<div class="fw-ur">{body}</div>'
         else:
             body = msg["fallback"][lang]
+
         blocks.append(
             f'<div class="fw-msg"><span class="fw-msg-av">{T.icon("leaf")}</span>'
             f'<div><div class="fw-bubble">{body}</div>{stamp}</div></div>'
         )
+
     return "".join(blocks) or '<p class="fw-small">Ask a question to get a source-backed answer.</p>'
 
 
@@ -225,31 +268,74 @@ def render() -> None:
                     args=("ur",),
                 )
 
-            entry = rag.entry_by_id(ss.last_answer) if ss.last_answer else rag.entry_by_id("cotton-fusarium")
-            crop_image = f"crop_{entry['crop']}" if entry else "crop_cotton"
+            latest_assistant = next(
+                (
+                    msg for msg in reversed(ss.chat_messages)
+                    if msg.get("role") == "assistant"
+                ),
+                None,
+            )
+            entry = (
+                rag.entry_by_id(latest_assistant["entry_id"])
+                if latest_assistant and latest_assistant.get("entry_id")
+                else None
+            )
+            crop_image = f"crop_{entry['crop'] if entry else ss.chat_crop}"
+
             with st.container(key="srcpanel"):
-                T.show(
-                    f"""
-<div class="fw-mini-label" style="margin-top:0">Source</div>
+                if entry:
+                    T.show(
+                        f"""
+<div class="fw-mini-label" style="margin-top:0">Handbook source</div>
 <div style="border-radius:14px;overflow:hidden;border:1px solid var(--line)">
   <div style="height:170px;{T.media(crop_image, 0, 0.12)}"></div>
   <div style="padding:14px 14px 16px">
-    <div class="fw-h4" style="line-height:1.35">{entry['doc'] if entry else 'No source yet'}</div>
+    <div class="fw-h4" style="line-height:1.35">{escape(entry['doc'])}</div>
     <div class="fw-small" style="margin-top:4px">PDF page {entry['page']} &middot; Printed page {entry['printed_page']}</div>
   </div>
 </div>
 <div style="margin-top:16px">
-  <div class="fw-h4">{entry['section'] if entry else ''}</div>
-  <p class="fw-small" style="margin-top:6px">{entry['snippet_en'] if entry else 'Answers will cite the handbook section they came from.'}</p>
+  <div class="fw-h4">{escape(entry['section'])}</div>
+  <p class="fw-small" style="margin-top:6px">{escape(entry['snippet_en'])}</p>
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-    {ui.badge(entry["heading"], "outline") if entry else ""}
+    {ui.badge(escape(entry["heading"]), "outline")}
   </div>
 </div>
 """,
-                    unsafe_allow_html=True,
-                )
-                if st.button("Open source", key="open_source", type="primary", width="stretch"):
-                    _source_dialog(entry["id"], ss.chat_lang)
+                        unsafe_allow_html=True,
+                    )
+                    if st.button("Open source", key="open_source", type="primary", width="stretch"):
+                        _source_dialog(entry["id"], ss.chat_lang)
+                elif latest_assistant and latest_assistant.get("ai_answer"):
+                    label = (
+                        "AI ?? ???? ???? ???????"
+                        if ss.chat_lang == "ur"
+                        else "AI-generated guidance"
+                    )
+                    description = (
+                        "?? ????? AI ??????? ??? ???? ?? ?? ????? ?? ????? ??? ????? ?????"
+                        if ss.chat_lang == "ur"
+                        else "This is general AI-generated guidance, not a handbook citation or live web research."
+                    )
+                    T.show(
+                        f"""
+<div class="fw-mini-label" style="margin-top:0">{label}</div>
+<div style="border-radius:14px;overflow:hidden;border:1px solid var(--line)">
+  <div style="height:170px;{T.media(crop_image, 0, 0.12)}"></div>
+  <div style="padding:14px">
+    <div class="fw-h4">FarmWiseAI</div>
+    <p class="fw-small" style="margin-top:6px">{description}</p>
+  </div>
+</div>
+""",
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    T.show(
+                        '<div class="fw-mini-label">Source</div>'
+                        '<p class="fw-small">No handbook source is available for this response.</p>'
+                    )
+
                 if st.button("See all saved answers", key="go_saved", width="stretch"):
                     from farmwise.routes import go
 

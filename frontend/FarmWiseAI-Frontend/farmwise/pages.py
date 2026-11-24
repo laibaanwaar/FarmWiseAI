@@ -14,13 +14,14 @@ def registry() -> dict:
     if _REGISTRY:
         return _REGISTRY
 
-    from farmwise.views import about, admin,  chat, crops, dashboard, home, saved, services
+    from farmwise.views import about, admin, auth, chat, crops, dashboard, home, saved, services
 
     _REGISTRY = {
         "home": st.Page(home.render, title="FarmWiseAI", default=True),
         "services": st.Page(services.render, title="Services", url_path=PATHS["services"]),
         "crops": st.Page(crops.render, title="Crops", url_path=PATHS["crops"]),
         "about": st.Page(about.render, title="About Us", url_path=PATHS["about"]),
+        "login": st.Page(auth.login, title="Login", url_path=PATHS["login"]),
         "dashboard": st.Page(dashboard.render, title="Dashboard", url_path=PATHS["dashboard"]),
         "chat": st.Page(chat.render, title="Crop assistant", url_path=PATHS["chat"]),
         "saved": st.Page(saved.render, title="Saved answers", url_path=PATHS["saved"]),

@@ -41,9 +41,9 @@ def top_nav(active: str) -> None:
     {logo()}
     <nav class="fw-nav-links">{links}</nav>
     <div class="fw-nav-actions">
-      <span class="fw-nav-quiet" aria-disabled="true">
-        Log in
-      </span>
+      <a class="fw-nav-quiet" href="{href('login')}" target="_self">
+    Log in
+</a>
       <a class="fw-btn fw-btn-lime fw-btn-sm" href="{href('chat')}" target="_self">
         Try the assistant
       </a>
