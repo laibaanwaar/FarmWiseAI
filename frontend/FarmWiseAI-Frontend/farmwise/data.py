@@ -360,13 +360,6 @@ KNOWLEDGE: list[dict] = [
     },
 ]
 
-SAVED = [
-    {"id": "wheat-urea", "title": "Fertilizer plan at tillering", "blurb": "Recommended dose and timing for better yield.", "crop": "Wheat", "image": "crop_wheat"},
-    {"id": "cotton-fusarium", "title": "Fusarium wilt in cotton", "blurb": "Key symptoms, causes and management steps.", "crop": "Cotton", "image": "crop_cotton"},
-    {"id": "sugarcane-borer", "title": "Stem borer management", "blurb": "Identification, monitoring and control options.", "crop": "Sugarcane", "image": "crop_sugarcane"},
-    {"id": "rice-water", "title": "Water management for rice", "blurb": "How much standing water, and when to drain.", "crop": "Rice", "image": "crop_rice"},
-]
-
 QUESTIONS = [
     "When should I apply urea to wheat?",
     "How much water does rice need?",

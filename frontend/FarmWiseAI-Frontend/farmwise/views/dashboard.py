@@ -6,14 +6,7 @@ import streamlit as st
 
 from farmwise import components as ui
 from farmwise import theme as T
-from farmwise.data import SAVED
-from farmwise.routes import go, href
-
-
-def _start_question(question: str, crop_key: str) -> None:
-    from farmwise.views import chat
-
-    chat.seed(question, crop_key)
+from farmwise.routes import go
 
 
 def render() -> None:
@@ -45,43 +38,30 @@ def render() -> None:
                 )
                 asked = cols[1].form_submit_button("Ask", type="primary", width="stretch")
             if asked and question.strip():
-                _start_question(question.strip(), st.session_state.chat_crop)
+                from farmwise.views import chat
+
+                chat.new_chat()
+                st.session_state["chat_pending_question"] = question.strip()
                 go("chat")
 
         st.write("")
         left, right = st.columns([1.15, 1], gap="large")
 
         with left:
-            T.show(
-                f"""
-<div class="fw-row-between" style="margin-bottom:12px">
-  <h3 class="fw-h3">Recent Questions</h3>
-</div>
-<div class="fw-tablecard"><p class="fw-small" style="padding:16px;margin:0">Your recent questions will appear here.</p></div>
-""",
-                unsafe_allow_html=True,
-            )
+            from farmwise.views import chat
+
+            with st.container(key="dashboard_history"):
+                chat.history_panel("Your conversations", open_chat=True)
 
         with right:
-            cards = "".join(
-                f"""
-<a class="fw-card" href="{href('saved')}" style="text-decoration:none">
-  <div class="fw-card-media" style="{T.media(s['image'], 0, 0.12)};height:130px"></div>
-  <div class="fw-card-body" style="padding:16px 16px 18px">
-    <span class="fw-chip">{T.icon('leaf')}{s['crop']}</span>
-    <div class="fw-h4">{s['title']}</div>
-    <p class="fw-small">{s['blurb']}</p>
-  </div>
-</a>"""
-                for s in SAVED[:2]
-            )
             T.show(
-                f"""
+                """
 <div class="fw-row-between" style="margin-bottom:12px">
-  <h3 class="fw-h3">Saved Answers</h3>
-  <a class="fw-small" href="{href('saved')}" style="font-weight:600;color:var(--text)">View all &rsaquo;</a>
+  <h3 class="fw-h3">Continue chatting</h3>
 </div>
-<div class="fw-grid grid-2">{cards}</div>
+<div class="fw-tablecard" style="padding:18px">
+  <p class="fw-small">Your answers and citations are saved in your conversation history.</p>
+</div>
 """,
                 unsafe_allow_html=True,
             )

@@ -21,10 +21,11 @@ def init() -> None:
         # Migrate the old demo fallback so it cannot be treated as a real pending signup.
         ss["pending_email"] = ""
     ss.setdefault("chat_messages", [])
-    ss.setdefault("chat_crop", "cotton")
-    ss.setdefault("chat_lang", "en")
-    ss.setdefault("chat_title", "Fusarium wilt in cotton")
-    ss.setdefault("last_answer", None)
+    ss.setdefault("chat_active_conversation", None)
+    ss.setdefault("chat_history", [])
+    ss.setdefault("chat_history_loaded", False)
+    ss.setdefault("chat_owner_id", None)
+    ss.setdefault("chat_request_inflight", False)
     ss.setdefault("theme_crop", "cotton")
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from urllib.parse import urlencode
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import Any
@@ -76,7 +77,8 @@ def _validation_message(errors: list[Any]) -> str | None:
 
 def request_json(method: str, path: str, *, payload: dict[str, Any] | None = None,
                  headers: dict[str, str] | None = None,
-                 allow_empty: bool = False) -> dict[str, Any]:
+                 allow_empty: bool = False, params: dict[str, Any] | None = None,
+                 timeout: tuple[float, float] | float = (3.05, 15)) -> dict[str, Any]:
     """Send JSON without caching or logging request contents."""
     base_url = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
     try:
@@ -85,10 +87,10 @@ def request_json(method: str, path: str, *, payload: dict[str, Any] | None = Non
             request_headers.update(headers)
         response = requests.request(
             method.upper(),
-            f"{base_url}/{path.lstrip('/')}",
+            f"{base_url}/{path.lstrip('/')}{'?' + urlencode(params) if params else ''}",
             json=payload,
             headers=request_headers,
-            timeout=(3.05, 15),
+            timeout=timeout,
         )
     except requests.Timeout as exc:
         raise APIError("The API request timed out. Please try again.", retryable=True) from exc
@@ -111,7 +113,7 @@ def request_json(method: str, path: str, *, payload: dict[str, Any] | None = Non
         elif error_code == "ACCOUNT_DISABLED":
             message = "This account is disabled. Contact support for help."
         if response.status_code == 422 and not message:
-            message = "Some signup fields are invalid. Review the form and try again."
+            message = "The request fields are invalid. Review them and try again."
         elif response.status_code == 422 and message == "Invalid request.":
             message = "Invalid request. Review the submitted fields and backend validation requirements."
         elif response.status_code == 429 and not message:
@@ -138,15 +140,19 @@ def post_json(path: str, payload: dict[str, Any]) -> dict[str, Any]:
     return request_json("POST", path, payload=payload)
 
 
-def get_json(path: str, *, access_token: str) -> dict[str, Any]:
-    return request_json("GET", path, headers={"Authorization": f"Bearer {access_token}"})
+def get_json(path: str, *, access_token: str, params: dict[str, Any] | None = None,
+             timeout: tuple[float, float] | float = (3.05, 15)) -> dict[str, Any]:
+    return request_json("GET", path, headers={"Authorization": f"Bearer {access_token}"},
+                        params=params, timeout=timeout)
 
 
 def post_authenticated(path: str, *, access_token: str,
                        payload: dict[str, Any] | None = None,
-                       allow_empty: bool = False) -> dict[str, Any]:
+                       allow_empty: bool = False,
+                       timeout: tuple[float, float] | float = (3.05, 15)) -> dict[str, Any]:
     return request_json(
         "POST", path, payload=payload,
         headers={"Authorization": f"Bearer {access_token}"},
         allow_empty=allow_empty,
+        timeout=timeout,
     )

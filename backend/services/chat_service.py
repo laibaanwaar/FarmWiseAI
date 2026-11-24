@@ -2,6 +2,9 @@ import asyncio
 from datetime import datetime, timezone
 
 from rag.pipeline import answer_question
+from rag.urdu_demo_answers import (
+    lookup_urdu_demo_answer, strip_demo_label, urdu_demo_answers_enabled,
+)
 
 
 class ChatServiceError(Exception):
@@ -29,12 +32,23 @@ class ChatService:
         else:
             crop = request.crop or "cotton"
 
-        try:
-            result = await asyncio.to_thread(
-                self.pipeline, request.question, crop
-            )
-        except Exception as exc:
-            raise ChatServiceError from exc
+        demo_answer = (
+            lookup_urdu_demo_answer(request.question)
+            if urdu_demo_answers_enabled() else None
+        )
+        if demo_answer is not None:
+            result = {
+                "status": "urdu_demo",
+                "answer": demo_answer["answer"],
+                "citations": demo_answer["citations"],
+            }
+        else:
+            try:
+                result = await asyncio.to_thread(
+                    self.pipeline, request.question, crop
+                )
+            except Exception as exc:
+                raise ChatServiceError from exc
 
         if (not isinstance(result, dict) or not isinstance(result.get("answer"), str)
                 or not isinstance(result.get("citations"), list)):
@@ -79,11 +93,15 @@ class ChatService:
         )
         if result is None:
             raise ConversationNotFound
+        messages = [dict(message) for message in result["messages"][offset:offset + limit]]
+        for message in messages:
+            if message.get("status") == "urdu_demo":
+                message["answer"] = strip_demo_label(message["answer"])
         return {
             "conversation_id": result["conversation_id"],
             "created_at": result["created_at"],
             "updated_at": result["updated_at"],
-            "messages": result["messages"][offset:offset + limit],
+            "messages": messages,
             "total_messages": result["message_count"],
             "offset": offset,
             "limit": limit,

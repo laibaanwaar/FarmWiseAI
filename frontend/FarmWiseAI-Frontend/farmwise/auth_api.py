@@ -85,10 +85,20 @@ def _set_profile(session_state: MutableMapping[str, Any], profile: dict[str, Any
 
 def clear_user_data(session_state: MutableMapping[str, Any]) -> None:
     session_state["chat_messages"] = []
+    session_state["chat_active_conversation"] = None
+    session_state["chat_history"] = []
+    session_state["chat_history_loaded"] = False
+    session_state["chat_history_error"] = None
+    session_state["chat_query_error"] = None
+    session_state["chat_notice"] = None
+    session_state["chat_owner_id"] = None
+    session_state["chat_request_inflight"] = False
+    session_state.pop("chat_pending_question", None)
+    session_state.pop("_chat_route_question", None)
+    session_state["chat_crop"] = None
+    session_state["chat_lang"] = None
+    session_state["chat_title"] = "New chat"
     session_state["last_answer"] = None
-    session_state["chat_title"] = "Fusarium wilt in cotton"
-    session_state["chat_crop"] = "cotton"
-    session_state["chat_lang"] = "en"
     session_state["theme_crop"] = "cotton"
     session_state.pop("_nav_params", None)
 
@@ -124,6 +134,7 @@ def establish_session(email: str, password: str,
     previous_email = (
         session_state.get("auth_user") or session_state.get("account") or {}
     ).get("email")
+    previous_id = (session_state.get("auth_user") or {}).get("id")
     tokens = login(email, password)
     session_state["auth_access_token"] = tokens["access_token"]
     session_state["auth_refresh_token"] = tokens["refresh_token"]
@@ -131,7 +142,8 @@ def establish_session(email: str, password: str,
     session_state["auth_pending_login_email"] = email
     try:
         profile = resume_login(session_state)
-        if previous_email and previous_email.casefold() != profile["email"].casefold():
+        if ((previous_email and previous_email.casefold() != profile["email"].casefold())
+                or (previous_id and previous_id != profile["id"])):
             clear_user_data(session_state)
     except APIError as exc:
         if not exc.retryable:
@@ -187,16 +199,26 @@ def _refresh(session_state: MutableMapping[str, Any]) -> None:
 
 
 def _authenticated_request(session_state: MutableMapping[str, Any], method: str,
-                           path: str, *, allow_empty: bool = False) -> dict[str, Any]:
+                           path: str, *, allow_empty: bool = False,
+                           payload: dict[str, Any] | None = None,
+                           params: dict[str, Any] | None = None,
+                           timeout: tuple[float, float] | float = (3.05, 15)) -> dict[str, Any]:
     access_token = session_state.get("auth_access_token")
     if not access_token:
         raise APIError("Please log in to continue.", status_code=401,
                        error_code="INVALID_ACCESS_TOKEN")
+    default_timeout = timeout == (3.05, 15)
     try:
         if method == "GET":
-            return get_json(path, access_token=access_token)
+            if params is None and default_timeout:
+                return get_json(path, access_token=access_token)
+            return get_json(path, access_token=access_token, params=params, timeout=timeout)
+        if payload is None and default_timeout and not allow_empty:
+            return post_authenticated(path, access_token=access_token)
+        if payload is None and default_timeout and allow_empty:
+            return post_authenticated(path, access_token=access_token, allow_empty=True)
         return post_authenticated(path, access_token=access_token,
-                                  allow_empty=allow_empty)
+                                  payload=payload, allow_empty=allow_empty, timeout=timeout)
     except APIError as exc:
         if exc.error_code == "ACCESS_TOKEN_EXPIRED":
             _refresh(session_state)
@@ -204,9 +226,16 @@ def _authenticated_request(session_state: MutableMapping[str, Any], method: str,
             new_token = session_state.get("auth_access_token")
             try:
                 if method == "GET":
-                    return get_json(path, access_token=new_token)
+                    if params is None and default_timeout:
+                        return get_json(path, access_token=new_token)
+                    return get_json(path, access_token=new_token, params=params, timeout=timeout)
+                if payload is None and default_timeout and not allow_empty:
+                    return post_authenticated(path, access_token=new_token)
+                if payload is None and default_timeout and allow_empty:
+                    return post_authenticated(path, access_token=new_token, allow_empty=True)
                 return post_authenticated(path, access_token=new_token,
-                                          allow_empty=allow_empty)
+                                          payload=payload, allow_empty=allow_empty,
+                                          timeout=timeout)
             except APIError as retry_error:
                 if retry_error.status_code == 401:
                     clear_auth_state(session_state)
@@ -218,12 +247,23 @@ def _authenticated_request(session_state: MutableMapping[str, Any], method: str,
         raise
 
 
+def authenticated_request(session_state: MutableMapping[str, Any], method: str,
+                          path: str, *, payload: dict[str, Any] | None = None,
+                          params: dict[str, Any] | None = None,
+                          timeout: tuple[float, float] | float = (3.05, 15)) -> dict[str, Any]:
+    """Authenticated request using the same one-time expired-token refresh path."""
+    return _authenticated_request(session_state, method, path, payload=payload,
+                                  params=params, timeout=timeout)
+
+
 def me(session_state: MutableMapping[str, Any]) -> dict[str, Any]:
     profile = _validate_profile(_authenticated_request(
         session_state, "GET", "/api/v1/auth/me"
     ))
     previous_email = (session_state.get("auth_user") or {}).get("email")
-    if previous_email and previous_email.casefold() != profile["email"].casefold():
+    previous_id = (session_state.get("auth_user") or {}).get("id")
+    if ((previous_email and previous_email.casefold() != profile["email"].casefold())
+            or (previous_id and previous_id != profile["id"])):
         clear_user_data(session_state)
     _set_profile(session_state, profile)
     return profile
