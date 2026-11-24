@@ -41,9 +41,9 @@ def top_nav(active: str) -> None:
     {logo()}
     <nav class="fw-nav-links">{links}</nav>
     <div class="fw-nav-actions">
-      <span class="fw-nav-quiet" aria-disabled="true">
-        Log in
-      </span>
+      <a class="fw-nav-quiet" href="{href('signup')}" target="_self">
+        Sign up
+      </a>
       <a class="fw-btn fw-btn-lime fw-btn-sm" href="{href('chat')}" target="_self">
         Try the assistant
       </a>
@@ -166,7 +166,7 @@ def app_nav(active: str, signed_in: bool = False) -> None:
         ("Dashboard", "dashboard", "nav_dashboard"),
         ("Saved Answers", "saved", "nav_saved"),
         ("New chat", "chat", "nav_newchat"),
-        ("Account", "login", "nav_account"),
+        ("Account", "account", "nav_account"),
     ]
     with st.container(key="appnav"):
         brand, menu = st.columns([1.4, 5], vertical_alignment="center", gap="small")

@@ -14,6 +14,7 @@ PATHS = {
     "verify": "verify-email",
     "resend": "resend-code",
     "login": "login",
+    "account": "account",
     "forgot": "forgot-password",
     "reset": "reset-password",
     "dashboard": "app",

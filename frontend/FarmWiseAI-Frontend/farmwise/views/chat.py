@@ -9,18 +9,6 @@ import streamlit as st
 from farmwise import components as ui
 from farmwise import rag
 from farmwise import theme as T
-from farmwise.data import CHATS
-
-CROP_CHOICES = [
-    ("cotton", "Cotton"),
-    ("wheat", "Wheat"),
-    ("sugarcane", "Sugarcane"),
-    ("rice", "Rice"),
-    ("maize", "Maize"),
-]
-LABELS = dict(CROP_CHOICES)
-
-
 def _now() -> str:
     return datetime.now().strftime("%I:%M %p")
 
@@ -58,11 +46,6 @@ def seed(question: str, crop: str = "cotton", title: str | None = None) -> None:
     _answer_into(question, crop)
 
 
-def _open(chat_id: str) -> None:
-    chat = next(c for c in CHATS if c["id"] == chat_id)
-    seed(chat["q"], chat["crop"], chat["title"])
-
-
 def _new_chat() -> None:
     ss = st.session_state
     ss.chat_messages = []
@@ -72,11 +55,6 @@ def _new_chat() -> None:
 
 def _set_lang(lang: str) -> None:
     st.session_state.chat_lang = lang
-
-
-def _pick_crop(key: str) -> None:
-    st.session_state.chat_crop = key
-    st.session_state.crop_select = LABELS.get(key, "Cotton")
 
 
 @st.dialog("Source document")
@@ -100,8 +78,8 @@ def _ensure_conversation() -> None:
         ss["_chat_param"] = question
         seed(question, crop or "cotton", question)
     elif not ss.chat_messages:
-        first = CHATS[0]
-        seed(first["q"], first["crop"], first["title"])
+        ss.chat_title = "New chat"
+        ss.last_answer = None
 
 
 def _transcript(lang: str) -> str:
@@ -141,51 +119,19 @@ def render() -> None:
 
         left, mid, right = st.columns([1.05, 2.35, 1.15], gap="medium")
 
-        # ---------------- conversations + crops
+        # ---------------- conversations
         with left:
             with st.container(key="chatpanel_left"):
                 with st.container(key="newchat"):
                     st.button("New chat", key="btn_new_chat", type="primary", width="stretch", on_click=_new_chat)
                 with st.container(key="chatlist"):
                     T.show('<div class="fw-mini-label">My Chats</div>')
-                    for chat in CHATS:
-                        st.button(
-                            chat["title"],
-                            key=f"chat_{chat['id']}",
-                            width="stretch",
-                            help=chat["when"],
-                            type="primary" if ss.chat_title == chat["title"] else "secondary",
-                            on_click=_open,
-                            args=(chat["id"],),
-                        )
-                    T.show('<div class="fw-mini-label">Crops</div>')
-                    for key, label in CROP_CHOICES:
-                        st.button(
-                            label,
-                            key=f"cropbtn_{key}",
-                            width="stretch",
-                            type="primary" if ss.chat_crop == key else "secondary",
-                            on_click=_pick_crop,
-                            args=(key,),
-                        )
+                    st.caption("No conversations yet. Start a new chat to ask a question.")
 
         # ---------------- conversation
         with mid:
             with st.container(key="chatpanel_main"):
-                head = st.columns([2.2, 1.1], vertical_alignment="center")
-                with head[0]:
-                    T.show('<div class="fw-chat-title"><h2>Crop Assistant</h2></div>', unsafe_allow_html=True)
-                with head[1]:
-                    options = [label for _, label in CROP_CHOICES]
-                    current = LABELS.get(ss.chat_crop, "Cotton")
-                    choice = st.selectbox(
-                        "Crop",
-                        options,
-                        index=options.index(current) if current in options else 0,
-                        key="crop_select",
-                        label_visibility="collapsed",
-                    )
-                    ss.chat_crop = next(k for k, v in LABELS.items() if v == choice)
+                T.show('<div class="fw-chat-title"><h2>Crop Assistant</h2></div>', unsafe_allow_html=True)
 
                 with st.container(key="chatscroll"):
                     T.show(_transcript(ss.chat_lang), unsafe_allow_html=True)

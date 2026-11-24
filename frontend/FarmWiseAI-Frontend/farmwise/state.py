@@ -12,7 +12,14 @@ def init() -> None:
     ss.setdefault("users", [dict(u) for u in data.USERS])
     ss.setdefault("audit", [dict(a) for a in data.AUDIT])
     ss.setdefault("account", None)
-    ss.setdefault("pending_email", "farmer@example.com")
+    ss.setdefault("auth_access_token", None)
+    ss.setdefault("auth_refresh_token", None)
+    ss.setdefault("auth_expires_in", None)
+    ss.setdefault("auth_user", None)
+    ss.setdefault("pending_email", "")
+    if ss.get("pending_email") == "farmer@example.com" and ss.get("account") is None:
+        # Migrate the old demo fallback so it cannot be treated as a real pending signup.
+        ss["pending_email"] = ""
     ss.setdefault("chat_messages", [])
     ss.setdefault("chat_crop", "cotton")
     ss.setdefault("chat_lang", "en")

@@ -5,6 +5,8 @@ from __future__ import annotations
 import streamlit as st
 
 from farmwise import components as ui
+from farmwise import auth_api
+from farmwise.api_client import APIError
 from farmwise import state as app_state
 from farmwise import theme as T
 from farmwise.data import RAG_SOURCES
@@ -101,7 +103,17 @@ def _sidebar(active: str) -> None:
             unsafe_allow_html=True,
         )
         if st.button("Sign out", key="adm_signout", icon=":material/logout:", width="stretch"):
-            go("home")
+            try:
+                with st.spinner("Logging out..."):
+                    auth_api.logout_session(st.session_state)
+                go("home")
+            except APIError as exc:
+                message = exc.message
+                if exc.retry_after:
+                    message += f" You can try again in {exc.retry_after}."
+                elif exc.retryable and "try again" not in message.casefold():
+                    message += " Please retry shortly."
+                st.error(message)
 
 
 def _table(headers: list[str], rows: list[str]) -> str:

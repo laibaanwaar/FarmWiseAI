@@ -360,20 +360,6 @@ KNOWLEDGE: list[dict] = [
     },
 ]
 
-RECENT_QUESTIONS = [
-    {"q": "What are the symptoms of Fusarium wilt in cotton?", "crop": "Cotton", "icon": "crop_cotton"},
-    {"q": "How to manage stem borer in sugarcane?", "crop": "Sugarcane", "icon": "crop_sugarcane"},
-    {"q": "Best fertilizer plan for wheat at tillering stage?", "crop": "Wheat", "icon": "crop_wheat"},
-]
-
-CHATS = [
-    {"id": "c-fusarium", "title": "Fusarium wilt in cotton", "when": "Today", "crop": "cotton", "q": "What are the symptoms of Fusarium wilt in cotton?"},
-    {"id": "c-borer", "title": "Stem borer in sugarcane", "when": "Yesterday", "crop": "sugarcane", "q": "How to manage stem borer in sugarcane?"},
-    {"id": "c-wheat", "title": "Wheat fertilizer plan", "when": "Jan 12", "crop": "wheat", "q": "Best fertilizer plan for wheat at tillering stage?"},
-    {"id": "c-tomato", "title": "Tomato leaf curl", "when": "Jan 10", "crop": "tomato", "q": "How do I control tomato leaf curl?"},
-    {"id": "c-blast", "title": "Basmati blast control", "when": "Jan 8", "crop": "rice", "q": "How do I control blast in basmati rice?"},
-]
-
 SAVED = [
     {"id": "wheat-urea", "title": "Fertilizer plan at tillering", "blurb": "Recommended dose and timing for better yield.", "crop": "Wheat", "image": "crop_wheat"},
     {"id": "cotton-fusarium", "title": "Fusarium wilt in cotton", "blurb": "Key symptoms, causes and management steps.", "crop": "Cotton", "image": "crop_cotton"},

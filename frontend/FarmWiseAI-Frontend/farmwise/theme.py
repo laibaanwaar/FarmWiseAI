@@ -110,12 +110,18 @@ def media(key: str, top: float = 0.0, bottom: float = 0.0, position: str = "cent
 
 
 @st.cache_data(show_spinner=False)
-def load_css() -> str:
+def load_css(version: int | None = None) -> str:
+    # Include the stylesheet timestamp in the cache key so CSS edits are picked
+    # up by a running Streamlit session on its next rerun.
+    del version
     return CSS_FILE.read_text(encoding="utf-8")
 
 
 def inject() -> None:
-    st.markdown(f"<style>{load_css()}</style>", unsafe_allow_html=True)
+    st.markdown(
+        f"<style>{load_css(CSS_FILE.stat().st_mtime_ns)}</style>",
+        unsafe_allow_html=True,
+    )
 
 
 def show(markup: str, *args, **kwargs) -> None:

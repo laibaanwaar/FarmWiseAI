@@ -6,7 +6,7 @@ import streamlit as st
 
 from farmwise import components as ui
 from farmwise import theme as T
-from farmwise.data import RECENT_QUESTIONS, SAVED
+from farmwise.data import SAVED
 from farmwise.routes import go, href
 
 
@@ -52,23 +52,12 @@ def render() -> None:
         left, right = st.columns([1.15, 1], gap="large")
 
         with left:
-            rows = "".join(
-                f"""
-<a class="fw-qrow" href="{href('chat', q=r['q'])}">
-  <span class="fw-ico" style="display:inline-flex">{T.icon('send')}</span>
-  <span class="fw-qtext">{r['q']}</span>
-  <span class="fw-chip">{T.icon('leaf')}{r['crop']}</span>
-  <span class="fw-ico" style="display:inline-flex">{T.icon('arrow')}</span>
-</a>"""
-                for r in RECENT_QUESTIONS
-            )
             T.show(
                 f"""
 <div class="fw-row-between" style="margin-bottom:12px">
   <h3 class="fw-h3">Recent Questions</h3>
-  <a class="fw-small" href="{href('saved')}" style="font-weight:600;color:var(--text)">View All &rsaquo;</a>
 </div>
-<div class="fw-tablecard">{rows}</div>
+<div class="fw-tablecard"><p class="fw-small" style="padding:16px;margin:0">Your recent questions will appear here.</p></div>
 """,
                 unsafe_allow_html=True,
             )

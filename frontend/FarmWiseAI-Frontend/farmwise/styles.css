@@ -1361,6 +1361,163 @@ button[data-testid*="primary"]:hover {
   margin-top: 6px;
 }
 
+/* Signup screen only: image-led split card and compact form styling. */
+.st-key-signup-page {
+  --signup-cream: #FBF8F1;
+  width: min(100% - 48px, 900px);
+  height: 540px;
+  min-height: 0;
+  margin: 0 auto 70px;
+  overflow: hidden;
+  border: 1px solid #E7E2D7;
+  border-radius: 20px;
+  background: var(--signup-cream);
+  box-shadow: 0 20px 55px -42px rgba(14, 33, 24, .45);
+}
+
+.st-key-signup-page [data-testid="stHorizontalBlock"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 0 !important;
+  align-items: stretch;
+  height: 100%;
+  min-height: 0;
+}
+
+.st-key-signup-page [data-testid="stColumn"] {
+  width: 100% !important;
+  min-width: 0;
+  padding: 0;
+}
+
+.st-key-signup-page [data-testid="stColumn"]:first-child,
+.st-key-signup-page [data-testid="stColumn"]:first-child > div {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+.st-key-signup-page .fw-signup-image {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.st-key-signup-page .fw-signup-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.st-key-signup-page [data-testid="stColumn"]:last-child {
+  padding: 38px clamp(28px, 4vw, 48px);
+  align-self: center;
+}
+
+.st-key-signup-page [data-testid="stColumn"]:last-child > div {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.st-key-signup-page .fw-signup-heading .fw-logo {
+  font-size: 19px;
+  color: #173C2A;
+}
+
+.st-key-signup-page .fw-signup-heading h1 {
+  margin: 24px 0 18px;
+  color: #10251A;
+  font-size: clamp(24px, 2.5vw, 30px);
+  line-height: 1.12;
+  font-weight: 800;
+  letter-spacing: -.035em;
+}
+
+.st-key-signup-page [data-testid="stForm"] {
+  margin: 0;
+}
+
+.st-key-signup-page [data-testid="stTextInput"] {
+  margin-bottom: 10px;
+}
+
+.st-key-signup-page [data-testid="stTextInput"] input {
+  min-height: 44px;
+  border: 1px solid #DEDCD3;
+  border-radius: 10px;
+  background: rgba(255,255,255,.36);
+  color: #14251B;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+.st-key-signup-page [data-testid="stTextInput"] input:focus {
+  border-color: #89A735;
+  box-shadow: 0 0 0 2px rgba(201,244,91,.26);
+}
+
+.st-key-signup-page [data-testid="stFormSubmitButton"] button {
+  min-height: 46px;
+  margin-top: 6px;
+  border: 0;
+  border-radius: 10px;
+  background: #B9E51C;
+  color: #14230D;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.st-key-signup-page [data-testid="stFormSubmitButton"] button:hover {
+  background: #A9D817;
+  color: #14230D;
+}
+
+.st-key-signup-page .fw-small {
+  color: #667066;
+}
+
+.st-key-signup-page a {
+  color: #173C2A !important;
+}
+
+@media (max-width: 700px) {
+  .st-key-signup-page {
+    width: min(100% - 24px, 520px);
+    height: auto;
+    min-height: 0;
+    margin: 12px auto;
+  }
+
+  .st-key-signup-page [data-testid="stHorizontalBlock"] {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .st-key-signup-page [data-testid="stColumn"]:first-child,
+  .st-key-signup-page [data-testid="stColumn"]:first-child > div,
+  .st-key-signup-page .fw-signup-image,
+  .st-key-signup-page .fw-signup-image img {
+    min-height: 0;
+    height: 220px;
+  }
+
+  .st-key-signup-page [data-testid="stColumn"]:last-child {
+    padding: 32px 26px 28px;
+  }
+
+  .st-key-signup-page [data-testid="stColumn"]:last-child > div {
+    max-width: none;
+  }
+
+  .st-key-signup-page .fw-signup-heading h1 {
+    margin: 22px 0 18px;
+  }
+}
+
 .st-key-authplain {
   max-width: 470px;
   margin: 24px auto 70px;
@@ -1397,6 +1554,135 @@ button[data-testid*="primary"]:hover {
   min-width: 0;
 }
 
+/* Compact email verification cards; styles stay local to the OTP routes. */
+.st-key-otp-verify,
+.st-key-otp-resend {
+  box-sizing: border-box;
+  width: min(calc(100% - 32px), 410px);
+  margin: 28px auto;
+  padding: 26px 28px 22px;
+  border: 1px solid #E7E2D7;
+  border-radius: 12px;
+  background: #FBF8F1;
+  box-shadow: 0 16px 42px -34px rgba(14, 33, 24, .45);
+}
+
+.fw-otp-heading {
+  text-align: center;
+}
+
+.fw-otp-heading .fw-logo {
+  font-size: 17px;
+  color: #173C2A;
+}
+
+.fw-otp-mail {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 48px;
+  margin: 16px auto 10px;
+  color: #173C2A;
+}
+
+.fw-otp-mail .fw-ico {
+  width: 45px;
+  height: 45px;
+  stroke-width: 1.8;
+}
+
+.fw-otp-heading .fw-auth-head {
+  margin: 0 0 5px;
+  color: #10251A;
+  font-size: 24px;
+  line-height: 1.18;
+  font-weight: 800;
+  letter-spacing: -.03em;
+}
+
+.fw-otp-heading .fw-small {
+  color: #536158;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.st-key-otp-digits {
+  margin-top: 12px;
+}
+
+.st-key-otp-digits [data-testid="stHorizontalBlock"] {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 7px !important;
+}
+
+.st-key-otp-digits [data-testid="stColumn"] {
+  width: 100% !important;
+  min-width: 0;
+}
+
+.st-key-otp-digits [data-testid="stTextInput"] {
+  min-width: 0;
+}
+
+.st-key-otp-digits [data-testid="stTextInput"] input {
+  height: 42px;
+  min-height: 42px;
+  padding: 0;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #14251B;
+  border: 1px solid #DEDCD3;
+  border-radius: 7px;
+  background: #fffdf9;
+}
+
+.st-key-otp-verify [data-testid="stButton"] button,
+.st-key-otp-resend [data-testid="stButton"] button {
+  min-height: 40px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.st-key-otp-verify .st-key-verify_btn button,
+.st-key-otp-resend .st-key-resend_btn button {
+  border: 0;
+  background: #B9E51C;
+  color: #14230D;
+}
+
+.st-key-otp-resend .st-key-back_verify button {
+  border: 1px solid #315B49;
+  background: transparent;
+  color: #173C2A;
+}
+
+.st-key-otp-verify .fw-otp-link {
+  margin: 9px 0 0;
+  text-align: center;
+  font-size: 12px;
+}
+
+.st-key-otp-verify .fw-otp-link a {
+  color: #173C2A !important;
+  font-weight: 700;
+  text-decoration: underline !important;
+}
+
+@media (max-width: 480px) {
+  .st-key-otp-verify,
+  .st-key-otp-resend {
+    width: min(calc(100% - 24px), 410px);
+    margin: 16px auto;
+    padding: 23px 18px 20px;
+  }
+
+  .st-key-otp-digits [data-testid="stHorizontalBlock"] {
+    gap: 5px !important;
+  }
+}
+
 /* ---------- Operator app frame ---------- */
 .st-key-appframe {
   padding: 20px 24px 64px;
@@ -1417,19 +1703,8 @@ button[data-testid*="primary"]:hover {
 }
 
 .st-key-chatscroll {
-  max-height: 60vh;
   min-height: 340px;
-  overflow-y: auto;
   padding: 4px 6px 4px 2px;
-}
-
-.st-key-chatscroll::-webkit-scrollbar {
-  width: 6px;
-}
-
-.st-key-chatscroll::-webkit-scrollbar-thumb {
-  background: #DAD8CB;
-  border-radius: 99px;
 }
 
 .fw-chat-title {
